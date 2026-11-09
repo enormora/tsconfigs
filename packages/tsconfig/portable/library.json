@@ -1,0 +1,3 @@
+{
+    "extends": ["../portable.json", "../library.json"]
+}

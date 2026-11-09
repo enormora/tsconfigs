@@ -1,0 +1,9 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "workspaces": {
+        ".": {
+            "entry": ["test/**/*.test.ts", "test/prepare-consumers.entry-point.ts", "packtory.config.js"],
+            "project": ["test/**/*.ts"]
+        }
+    }
+}

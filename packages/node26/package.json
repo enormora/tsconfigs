@@ -1,0 +1,19 @@
+{
+    "name": "@enormora/tsconfig-node26",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "types": "./globals.d.ts",
+    "exports": {
+        ".": {
+            "types": "./globals.d.ts"
+        },
+        "./app.json": "./app.json",
+        "./library.json": "./library.json",
+        "./strip-types.json": "./strip-types.json",
+        "./tsconfig.json": "./tsconfig.json"
+    },
+    "dependencies": {
+        "@types/node": "26.6.6"
+    }
+}

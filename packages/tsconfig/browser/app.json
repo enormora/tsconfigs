@@ -1,0 +1,3 @@
+{
+    "extends": ["../browser.json", "../check.json"]
+}

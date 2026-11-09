@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "exactOptionalPropertyTypes": true,
+        "noUncheckedIndexedAccess": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "noUncheckedSideEffectImports": true,
+        "skipLibCheck": false,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "erasableSyntaxOnly": true,
+        "moduleDetection": "force",
+        "types": [],
+        "libReplacement": false
+    }
+}

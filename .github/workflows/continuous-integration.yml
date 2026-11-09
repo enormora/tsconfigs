@@ -1,0 +1,74 @@
+name: Continuous integration
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+    merge_group:
+    workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    checks:
+        name: Quality checks
+        runs-on: ubuntu-24.04
+        timeout-minutes: 20
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+              with:
+                  node-version: 26.x
+                  cache: npm
+            - run: npm ci --ignore-scripts
+            - run: npx just check
+
+    compiler-canary:
+        name: TypeScript ${{ matrix.compiler }}
+        runs-on: ubuntu-24.04
+        timeout-minutes: 20
+        continue-on-error: true
+        permissions:
+            contents: read
+        strategy:
+            fail-fast: false
+            matrix:
+                compiler: [typescript-beta, typescript-next]
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+              with:
+                  node-version: 26.x
+                  cache: npm
+            - run: npm ci --ignore-scripts
+            - name: Test locked compiler canary
+              env:
+                  COMPILER: ${{ matrix.compiler }}
+              run: npx just test --grep "${COMPILER}"
+
+    workflow-security:
+        name: Workflow security
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482
+              with:
+                  version: 1.26.1
+                  persona: pedantic
+                  min-severity: informational
+                  min-confidence: low
+                  advanced-security: false

@@ -1,0 +1,14 @@
+{
+    "extends": ["./packages/tsconfig/base.json", "./packages/tsconfig/check.json"],
+    "compilerOptions": {
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ES2025",
+        "lib": ["ES2025"],
+        "types": ["node"],
+        "rootDir": ".",
+        "resolveJsonModule": true
+    },
+    "include": ["test/**/*.ts", "packages/node26/globals.d.ts"],
+    "exclude": ["target", "node_modules"]
+}
