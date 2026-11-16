@@ -1,0 +1,26 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "entry": [
+        "packtory.config.js",
+        "integration-test/**/*.test.ts",
+        "integration-test/prepare-consumers.entry-point.ts",
+        "configs/overkill.config.ts"
+    ],
+    "project": [
+        "integration-test/**/*.ts",
+        "configs/**/*.{js,ts}"
+    ],
+    "eslint": {
+        "config": [
+            "configs/eslint.config.js"
+        ]
+    },
+    "dependency-cruiser": {
+        "config": [
+            "configs/dependency-cruiser.config.ts"
+        ]
+    },
+    "ignoreDependencies": [
+        "@ls-lint/ls-lint"
+    ]
+}

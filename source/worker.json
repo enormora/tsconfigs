@@ -1,0 +1,10 @@
+{
+    "extends": "./base.json",
+    "compilerOptions": {
+        "lib": [
+            "ES2025",
+            "WebWorker",
+            "WebWorker.Iterable"
+        ]
+    }
+}

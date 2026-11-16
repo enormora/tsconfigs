@@ -6,32 +6,80 @@ on:
 permissions: {}
 
 concurrency:
-    group: publish
+    group: publish-main
     cancel-in-progress: false
 
 jobs:
+    evaluate-gate:
+        name: Evaluate GitHub release gate
+        if: github.ref == 'refs/heads/main'
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        permissions:
+            actions: read # Inspect CI workflow runs.
+            contents: read
+            issues: read # Inspect open issue activity.
+            pull-requests: read # Inspect open pull request activity.
+        outputs:
+            should_publish: ${{ steps.release-gate.outputs.should_publish }}
+            main_head_sha: ${{ steps.main-head.outputs.main_head_sha }}
+        steps:
+            - uses: actions/checkout@v7.0.1
+              with:
+                  ref: main
+                  persist-credentials: false
+            - name: Resolve main commit
+              id: main-head
+              run: echo "main_head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            - uses: actions/setup-node@v7.1.0
+              with:
+                  node-version-file: package.json
+            - run: npm ci --ignore-scripts
+            - run: npm audit signatures
+            - name: Verify release gate provenance
+              run: |
+                  version=$(jq -r '.devDependencies["@packtory/github-release-gate"]' package.json)
+                  npm view "@packtory/github-release-gate@${version}" --json | jq -e '.dist.attestations.url'
+            - name: Evaluate GitHub release gate
+              id: release-gate
+              run: npx github-release-gate
+              env:
+                  CI_WORKFLOW_FILE: continuous-integration.yml
+                  CHECKED_OUT_HEAD_HASH: ${{ steps.main-head.outputs.main_head_sha }}
+                  DEFAULT_BRANCH: main
+                  DEPENDENCY_ONLY_MINIMUM_AGE_DAYS: "7"
+                  GITHUB_TOKEN: ${{ github.token }}
+                  MAXIMUM_LATENCY_HOURS: "24"
+                  QUIET_PERIOD_MINUTES: "45"
+            - name: Report gate decision
+              run: echo "$GATE_REASON"
+              env:
+                  GATE_REASON: ${{ steps.release-gate.outputs.reason }}
+
     publish:
         name: Publish packages
-        if: github.ref == 'refs/heads/main'
+        needs: evaluate-gate
+        if: needs.evaluate-gate.outputs.should_publish == 'true'
         runs-on: ubuntu-24.04
         timeout-minutes: 20
         environment: npm
         permissions:
-            contents: write # Create package tags and GitHub releases.
+            contents: read
             id-token: write # Authenticate npm Trusted Publishing and provenance.
         steps:
-            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/checkout@v7.0.1
               with:
-                  fetch-depth: 0
+                  ref: ${{ needs.evaluate-gate.outputs.main_head_sha }}
                   persist-credentials: false
-            - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+            - uses: actions/setup-node@v7.1.0
               with:
-                  node-version: 26.x
-                  cache: npm
+                  node-version-file: package.json
             - run: npm ci --ignore-scripts
-            - run: npx just check
             - run: npm audit signatures
+            - name: Verify Packtory provenance
+              run: |
+                  version=$(jq -r '.devDependencies["@packtory/cli"]' package.json)
+                  npm view "@packtory/cli@${version}" --json | jq -e '.dist.attestations.url'
+            - run: npx just compile
             - name: Publish with provenance
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: npx packtory release --publish --tag --push --github-release --no-dry-run
+              run: npx packtory publish --no-dry-run

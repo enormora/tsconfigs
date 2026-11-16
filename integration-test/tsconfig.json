@@ -1,0 +1,17 @@
+{
+    "extends": "../source/base.json",
+    "compilerOptions": {
+        "types": [
+            "node"
+        ],
+        "rootDir": "..",
+        "outDir": "../target/build",
+        "tsBuildInfoFile": "../target/buildcache/integration-test.tsbuildinfo"
+    },
+    "include": [
+        "./**/*.ts",
+        "../configs/overkill.config.ts",
+        "../configs/dependency-cruiser.config.ts",
+        "../package.json"
+    ]
+}
