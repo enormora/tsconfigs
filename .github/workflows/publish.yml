@@ -2,6 +2,16 @@ name: Publish
 
 on:
     workflow_dispatch:
+        inputs:
+            publish_now:
+                description: Publish immediately without evaluating the release gate.
+                required: true
+                default: false
+                type: boolean
+            confirmation:
+                description: 'Required when publish_now is true: type "publish tsconfigs".'
+                required: false
+                type: string
 
 permissions: {}
 
@@ -21,7 +31,7 @@ jobs:
             issues: read # Inspect open issue activity.
             pull-requests: read # Inspect open pull request activity.
         outputs:
-            should_publish: ${{ steps.release-gate.outputs.should_publish }}
+            should_publish: ${{ steps.force-publish.outputs.should_publish || steps.release-gate.outputs.should_publish }}
             main_head_sha: ${{ steps.main-head.outputs.main_head_sha }}
         steps:
             - uses: actions/checkout@v7.0.1
@@ -31,17 +41,34 @@ jobs:
             - name: Resolve main commit
               id: main-head
               run: echo "main_head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            - name: Confirm manual publish override
+              id: force-publish
+              if: inputs.publish_now
+              env:
+                  CONFIRMATION: ${{ inputs.confirmation }}
+              run: |
+                  if [ "${CONFIRMATION}" != "publish tsconfigs" ]; then
+                    echo "::error::Manual publish override requires confirmation: publish tsconfigs"
+                    exit 1
+                  fi
+                  echo "should_publish=true" >> "$GITHUB_OUTPUT"
+                  echo "reason=manual publish override confirmed" >> "$GITHUB_OUTPUT"
             - uses: actions/setup-node@v7.1.0
+              if: ${{ !inputs.publish_now }}
               with:
                   node-version-file: package.json
             - run: npm ci --ignore-scripts
+              if: ${{ !inputs.publish_now }}
             - run: npm audit signatures
+              if: ${{ !inputs.publish_now }}
             - name: Verify release gate provenance
+              if: ${{ !inputs.publish_now }}
               run: |
                   version=$(jq -r '.devDependencies["@packtory/github-release-gate"]' package.json)
                   npm view "@packtory/github-release-gate@${version}" --json | jq -e '.dist.attestations.url'
             - name: Evaluate GitHub release gate
               id: release-gate
+              if: ${{ !inputs.publish_now }}
               run: npx github-release-gate
               env:
                   CI_WORKFLOW_FILE: continuous-integration.yml
@@ -54,7 +81,7 @@ jobs:
             - name: Report gate decision
               run: echo "$GATE_REASON"
               env:
-                  GATE_REASON: ${{ steps.release-gate.outputs.reason }}
+                  GATE_REASON: ${{ steps.force-publish.outputs.reason || steps.release-gate.outputs.reason }}
 
     publish:
         name: Publish packages
