@@ -16,6 +16,7 @@
         "isolatedModules": true,
         "verbatimModuleSyntax": true,
         "erasableSyntaxOnly": true,
+        "importHelpers": true,
         "moduleDetection": "force",
         "types": [],
         "libReplacement": false,

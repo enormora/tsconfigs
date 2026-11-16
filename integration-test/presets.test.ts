@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { suite, test } from '@overkill-dev/test';
+import sourceManifest from '../package.json' with { type: 'json' };
 import { compilers, diagnosticCodes, runCompiler, writeProject } from './compiler-project.ts';
 import { readConsumerInstallation } from './consumer-installation.ts';
 import { runCommand } from './run-command.ts';
@@ -93,6 +94,39 @@ export const testNode = suite(
                 });
                 const result = await runCompiler(compiler.command, folder, [ '--project', 'tsconfig.json' ]);
                 scope.assert.annotated(result.output).equal(result.exitCode, 0);
+                return scope.assert.collect();
+            }),
+            test('imports executable helpers from tslib', async function (scope) {
+                const folder = await writeProject(consumer, {
+                    extends: '@enormora/tsconfig-node/tsconfig.json',
+                    compilerOptions: { target: 'ES2015' },
+                    files: [ 'index.ts' ]
+                }, {
+                    'package.json': JSON.stringify({
+                        private: true,
+                        type: 'module',
+                        dependencies: { tslib: sourceManifest.devDependencies.tslib }
+                    }),
+                    'index.ts': [
+                        'export async function answer(): Promise<number> { return await Promise.resolve(42); }',
+                        'void answer().then(value => process.stdout.write(String(value)));'
+                    ]
+                        .join('\n')
+                });
+                const installed = await runCommand('npm', [
+                    'install',
+                    '--ignore-scripts',
+                    '--no-audit',
+                    '--no-fund'
+                ], folder);
+                scope.assert.annotated(installed.output).equal(installed.exitCode, 0);
+                const built = await runCompiler(compiler.command, folder, [ '--project', 'tsconfig.json' ]);
+                scope.assert.annotated(built.output).equal(built.exitCode, 0);
+                scope.assert.match(await readFile(path.join(folder, 'index.js'), 'utf8'), /from ['"]tslib['"]/v);
+                scope.assert.deepEqual(await runCommand(process.execPath, [ 'index.js' ], folder), {
+                    exitCode: 0,
+                    output: '42'
+                });
                 return scope.assert.collect();
             }),
             test('enforces strictness beyond strict mode', async function (scope) {
