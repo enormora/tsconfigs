@@ -1,39 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import coreManifest from './packages/tsconfig/package.json' with { type: 'json' };
-import nodeManifest from './packages/node26/package.json' with { type: 'json' };
 
-const corePresets = [
-    'base',
-    'portable',
-    'browser',
-    'worker',
-    'build',
-    'check',
-    'declarations',
-    'library',
-    'react',
-    'portable/library',
-    'browser/app',
-    'worker/app'
-];
-const nodePresets = [ 'tsconfig', 'app', 'library', 'strip-types' ];
-
-function exposePresets(presets) {
-    return presets.map(function exposePreset(preset) {
-        return { root: preset, export: `./${preset}.json` };
-    });
-}
-
-function presetRoots(presets) {
-    return Object.fromEntries(presets.map(function presetRoot(preset) {
-        return [ preset, { json: `${preset}.json` } ];
-    }));
-}
+const corePresets = [ 'base', 'browser', 'worker' ];
 
 export async function buildConfiguration() {
     const projectFolder = process.cwd();
     const manifest = JSON.parse(await readFile(path.join(projectFolder, 'package.json'), 'utf8'));
+    const sharedFiles = [ 'LICENSE', 'source/base.json' ].map(function sharedFile(file) {
+        return path.join(projectFolder, file);
+    });
     return {
         registrySettings: {
             authentication: {
@@ -42,18 +17,22 @@ export async function buildConfiguration() {
             }
         },
         checks: {
-            requiredFiles: { enabled: true, files: [ 'LICENSE', 'README.md' ] },
-            uniqueTargetPaths: { enabled: true },
+            typeScriptIntegrity: { enabled: true, declarations: 'all' },
+            noDuplicatedFiles: { enabled: true, allowList: sharedFiles },
+            requiredFiles: { enabled: true, files: [ 'LICENSE', 'readme.md' ] },
             maximumBundleSize: { enabled: true, bytes: 50_000 },
+            noUnusedBundleDependencies: { enabled: true },
             noDevelopmentDependencyImports: { enabled: true },
+            uniqueTargetPaths: { enabled: true },
+            noSideEffects: { enabled: true },
             noUnexposedExecutables: { enabled: true },
-            typeScriptIntegrity: { enabled: true, declarations: 'all' }
+            nodeEngineCompatibility: { enabled: true }
         },
         commonPackageSettings: {
+            mainPackageManifest: manifest,
+            sourcesFolder: path.join(projectFolder, 'source'),
             publishSettings: { access: 'public', provenance: { type: 'automatic' } },
-            additionalFiles: [
-                { inputFilePath: path.join(projectFolder, 'LICENSE'), targetFilePath: 'LICENSE' }
-            ],
+            additionalFiles: [ { inputFilePath: sharedFiles[0], targetFilePath: 'LICENSE' } ],
             additionalPackageManifestAttributes: {
                 repository: manifest.repository,
                 license: manifest.license,
@@ -64,46 +43,40 @@ export async function buildConfiguration() {
         packages: [
             {
                 name: '@enormora/tsconfig',
-                mainPackageManifest: coreManifest,
-                versioning: { automatic: false, version: coreManifest.version },
-                sourcesFolder: path.join(projectFolder, 'packages/tsconfig'),
-                roots: presetRoots(corePresets),
-                packageInterface: { modules: exposePresets(corePresets) },
-                additionalFiles: [
-                    { inputFilePath: path.join(projectFolder, 'README.md'), targetFilePath: 'README.md' }
-                ],
-                additionalPackageManifestAttributes: {
-                    description: 'Strict, composable TypeScript configurations'
-                }
-            },
-            {
-                name: '@enormora/tsconfig-node26',
-                mainPackageManifest: nodeManifest,
-                versioning: { automatic: false, version: nodeManifest.version },
-                sourcesFolder: path.join(projectFolder, 'packages'),
-                roots: {
-                    globals: { declarationFile: 'node26/globals.d.ts' },
-                    ...Object.fromEntries(nodePresets.map(function nodeRoot(preset) {
-                        return [ preset, { json: `node26/${preset}.json` } ];
-                    })),
-                    ...Object.fromEntries(corePresets.map(function sharedRoot(preset) {
-                        return [ `shared/${preset}`, { json: `tsconfig/${preset}.json` } ];
-                    }))
-                },
+                roots: Object.fromEntries(corePresets.map(function presetRoot(preset) {
+                    return [ preset, { json: `${preset}.json` } ];
+                })),
                 packageInterface: {
-                    modules: [ { root: 'globals', export: '.' }, ...exposePresets(nodePresets) ],
-                    privateRoots: corePresets.map(function sharedRoot(preset) {
-                        return `shared/${preset}`;
+                    modules: corePresets.map(function exposePreset(preset) {
+                        return { root: preset, export: `./${preset}.json` };
                     })
                 },
-                additionalFiles: [
-                    {
-                        inputFilePath: path.join(projectFolder, 'packages/node26/README.md'),
-                        targetFilePath: 'README.md'
-                    }
-                ],
+                additionalFiles: [ {
+                    inputFilePath: path.join(projectFolder, 'readme.md'),
+                    targetFilePath: 'readme.md'
+                } ],
+                additionalPackageManifestAttributes: { description: 'Strict TypeScript project-reference presets' }
+            },
+            {
+                name: '@enormora/tsconfig-node',
+                roots: {
+                    globals: { declarationFile: 'node/globals.d.ts' },
+                    configuration: { json: 'node/tsconfig.json' },
+                    base: { json: 'base.json' }
+                },
+                packageInterface: {
+                    modules: [
+                        { root: 'globals', export: '.' },
+                        { root: 'configuration', export: './tsconfig.json' }
+                    ],
+                    privateRoots: [ 'base' ]
+                },
+                additionalFiles: [ {
+                    inputFilePath: path.join(projectFolder, 'source/node/readme.md'),
+                    targetFilePath: 'readme.md'
+                } ],
                 additionalPackageManifestAttributes: {
-                    description: 'Strict TypeScript configurations and declarations for Node.js 26'
+                    description: 'Strict Node.js project-reference preset with Node declarations'
                 }
             }
         ]

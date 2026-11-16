@@ -19,6 +19,20 @@
         "erasableSyntaxOnly": true,
         "moduleDetection": "force",
         "types": [],
-        "libReplacement": false
+        "libReplacement": false,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ES2025",
+        "lib": [
+            "ES2025"
+        ],
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "noEmitOnError": true,
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true,
+        "resolveJsonModule": true
     }
 }

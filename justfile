@@ -1,25 +1,26 @@
 set dotenv-load := false
 set export
 export PATH := justfile_directory() + "/node_modules/.bin:" + env_var("PATH")
-core_version := `node --print "require('./packages/tsconfig/package.json').version"`
-node_version := `node --print "require('./packages/node26/package.json').version"`
+version := `node --print "require('./package.json').version"`
 
 lint:
-    eslint . .github --max-warnings 0
-    knip
+    eslint . .github --config configs/eslint.config.js --max-warnings 0
+    ls-lint -config configs/ls-lint.yml
+    knip --config configs/knip.json
+    depcruise integration-test configs packtory.config.js --config configs/dependency-cruiser.config.ts
 
 compile:
-    node node_modules/typescript/bin/tsc --project tsconfig.json
+    node node_modules/typescript/bin/tsc --build --stopBuildOnErrors
 
-test *OPTIONS: pack
-    node test/prepare-consumers.entry-point.ts
-    mocha --config mocha.config.json {{OPTIONS}}
+integration-test: pack
+    node integration-test/prepare-consumers.entry-point.ts
+    overkill run --config configs/overkill.config.ts --profile integration
 
 pack:
-    packtory pack @enormora/tsconfig --format tar --out target/tsconfig.tgz --version {{core_version}}
-    packtory pack @enormora/tsconfig-node26 --format tar --out target/tsconfig-node26.tgz --version {{node_version}}
+    packtory pack @enormora/tsconfig --format tar --out target/tsconfig.tgz --version {{version}}
+    packtory pack @enormora/tsconfig-node --format tar --out target/tsconfig-node.tgz --version {{version}}
 
 publish-dry-run:
     packtory publish
 
-check: lint compile test publish-dry-run
+check: lint compile integration-test publish-dry-run

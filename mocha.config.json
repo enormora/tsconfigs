@@ -1,9 +1,0 @@
-{
-    "extension": ["ts"],
-    "spec": ["test/**/*.test.ts"],
-    "ui": "tdd",
-    "grep": "package installation|with typescript(?:-native)? ",
-    "forbidPending": true,
-    "timeout": 120000,
-    "reporter": "dot"
-}

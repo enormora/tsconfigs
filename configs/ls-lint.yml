@@ -1,0 +1,12 @@
+ls:
+    .dir: kebab-case | regex:\.[a-z]+(-[a-z]+)*
+    .js: kebab-case | regex:.*\.config
+    .json: kebab-case
+    .yml: kebab-case
+    .md: kebab-case
+    .ts: kebab-case | regex:.*\.(test|config|entry-point)
+    .d.ts: kebab-case
+ignore:
+    - .git
+    - node_modules
+    - target

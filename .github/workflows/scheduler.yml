@@ -1,0 +1,27 @@
+name: Schedule publish
+
+on:
+    schedule:
+        - cron: "17,47 * * * *"
+    workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+    group: publish-scheduler
+    cancel-in-progress: false
+
+jobs:
+    dispatch:
+        name: Dispatch publish workflow
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        permissions:
+            actions: write # Dispatch the publish workflow.
+            contents: read # Read workflow metadata.
+        steps:
+            - name: Dispatch publish workflow
+              run: gh workflow run publish.yml --ref main
+              env:
+                  GH_REPO: ${{ github.repository }}
+                  GH_TOKEN: ${{ github.token }}
