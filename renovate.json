@@ -1,4 +1,14 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["github>enormora/renovate-config#1.0.3"]
+    "extends": ["github>enormora/renovate-config#1.0.3"],
+    "constraints": {
+        "ghActionsLock": "v0.4.1"
+    },
+    "packageRules": [
+        {
+            "matchManagers": ["github-actions"],
+            "matchDepTypes": ["action"],
+            "pinDigests": false
+        }
+    ]
 }
