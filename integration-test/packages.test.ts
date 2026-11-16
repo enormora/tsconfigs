@@ -12,18 +12,18 @@ export const testNode = suite('published packages', [
     test('ships declarations and inferred dependencies without JavaScript', async function (scope) {
         const nodeFolder = path.join(consumer.folder, 'node_modules/@enormora/tsconfig-node');
         const manifest = await readManifest(path.join(nodeFolder, 'package.json'));
-        scope.assert.deepEqual(manifest['dependencies'], sourceManifest.dependencies);
-        scope.assert.deepEqual(manifest['exports'], {
+        scope.assert.deepEqual(manifest.dependencies, sourceManifest.dependencies);
+        scope.assert.deepEqual(manifest.exports, {
             '.': { types: './node/globals.d.ts' },
             './tsconfig.json': './node/tsconfig.json'
         });
-        scope.assert.equal(manifest['main'], undefined);
+        scope.assert.equal(manifest.main, undefined);
         scope.assert.equal(await readFile(path.join(nodeFolder, 'node/globals.d.ts'), 'utf8'), "import 'node';\n");
         const coreManifest = await readManifest(
             path.join(consumer.folder, 'node_modules/@enormora/tsconfig/package.json')
         );
-        scope.assert.equal(coreManifest['dependencies'], undefined);
-        scope.assert.deepEqual(coreManifest['exports'], {
+        scope.assert.equal(coreManifest.dependencies, undefined);
+        scope.assert.deepEqual(coreManifest.exports, {
             './base.json': './base.json',
             './browser.json': './browser.json',
             './worker.json': './worker.json'
@@ -35,7 +35,7 @@ export const testNode = suite('published packages', [
         const resolveFromPreset = createRequire(path.join(nodeFolder, 'node/globals.d.ts'));
         const typesPath = resolveFromPreset.resolve('@types/node/package.json');
         const nodeTypes = await readManifest(typesPath);
-        scope.assert.equal(nodeTypes['version'], sourceManifest.dependencies['@types/node']);
+        scope.assert.equal(nodeTypes.version, sourceManifest.dependencies['@types/node']);
         scope.assert.false(path.relative(await realpath(consumer.folder), typesPath).startsWith('..'));
         await scope.assert.rejects(
             async function () {

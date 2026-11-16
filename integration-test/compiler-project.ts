@@ -45,6 +45,6 @@ export async function runCompiler(
 
 export function diagnosticCodes(compilation: CommandResult): readonly number[] {
     return Array.from(compilation.output.matchAll(/error TS(?<code>\d+):/gv), function diagnosticCode(match) {
-        return Number(match.groups?.['code']);
+        return Number(match.groups?.code);
     });
 }

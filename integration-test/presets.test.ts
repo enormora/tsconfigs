@@ -80,6 +80,21 @@ export const testNode = suite(
                 }
                 return scope.assert.collect();
             }),
+            test('allows dot access to index signatures', async function (scope) {
+                const folder = await writeProject(consumer, {
+                    extends: '@enormora/tsconfig/base.json',
+                    files: [ 'index.ts' ]
+                }, {
+                    'index.ts': [
+                        'export const entries: Record<string, number> = {};',
+                        'export const value: number | undefined = entries.missing;'
+                    ]
+                        .join('\n')
+                });
+                const result = await runCompiler(compiler.command, folder, [ '--project', 'tsconfig.json' ]);
+                scope.assert.annotated(result.output).equal(result.exitCode, 0);
+                return scope.assert.collect();
+            }),
             test('enforces strictness beyond strict mode', async function (scope) {
                 const folder = await writeProject(consumer, {
                     extends: '@enormora/tsconfig/base.json',
@@ -103,7 +118,7 @@ export const testNode = suite(
                 });
                 const result = await runCompiler(compiler.command, folder, [ '--project', 'tsconfig.json' ]);
                 const codes = diagnosticCodes(result);
-                for (const code of [ 2322, 4111, 2375, 7030, 6133, 4114, 7027, 7028, 7029, 2882, 1294 ]) {
+                for (const code of [ 2322, 2375, 7030, 6133, 4114, 7027, 7028, 7029, 2882, 1294 ]) {
                     scope.assert.annotated(`Missing TS${code}: ${result.output}`).true(codes.includes(code));
                 }
                 await scope.assert.rejects(async function () {
