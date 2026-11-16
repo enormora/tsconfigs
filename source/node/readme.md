@@ -27,6 +27,7 @@ Changing the supported Node major is a breaking package change; the package uses
 Set `"type": "module"` in your package for ESM. Relative TypeScript import extensions are allowed and rewritten during emission.
 Choose project paths, file selection, and references locally. Referenced projects need declaration output.
 If another tool emits JavaScript, `emitDeclarationOnly: true` retains the declarations needed by references.
+Generated helpers are imported from `tslib`. Add `tslib` as a runtime dependency when compilation emits helpers.
 
 Requires TypeScript 6.0 or 7.0. Targets ECMAScript 2025 and adds no DOM library.
 Node supplies some web APIs, including `fetch`; browser document and window globals remain unavailable.

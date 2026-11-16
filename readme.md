@@ -81,6 +81,8 @@ If another tool emits JavaScript, set `emitDeclarationOnly: true` locally to ret
 Use `noEmit: true` only for standalone checks, not projects consumed by other projects in the graph.
 Node can also execute erasable TypeScript source directly; it ignores compiler settings at runtime.
 
+Generated helpers are imported from `tslib`. Add `tslib` as a runtime dependency when compilation emits helpers.
+
 Strict checking includes exact optional properties, checked indexed access,
 override checks, checked side-effect imports, unused-code checks, and declaration checking.
 Enums and parameter properties are rejected. Unreachable code, unused labels, switch fallthrough, and incomplete returns are errors.
